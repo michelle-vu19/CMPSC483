@@ -402,4 +402,51 @@ app.get("/api/assignments", async (req, res) => {
   });
 });
 
-app.get("/api/teams/:count");
+app.get("/api/highteams/:count", async (req, res) => {
+  const query = SQL`SELECT projects.title, projects.company, projects.id
+    FROM projects
+    INNER JOIN assignments 
+        ON projects.id = assignments.project_id
+    GROUP BY assignments.project_id
+    HAVING COUNT(assignments.project_id) >= ${n}`;
+  databaseConnection.execute(query, (error, result) => {
+    if (error) {
+      res
+        .status(401)
+        .json({ message: `Error occurred when querying database: ${error}` });
+    }
+    console.log("Assignments Retrieved!");
+    res.json(result);
+  });
+});
+
+app.get("api/lowteams/:count", async (req, res) => {
+  const query = SQL`SELECT projects.title, projects.company, projects.id
+    FROM projects
+    INNER JOIN assignments 
+        ON projects.id = assignments.project_id
+    GROUP BY assignments.project_id
+    HAVING COUNT(assignments.project_id) <= ${n}`;
+  databaseConnection.execute(query, (error, result) => {
+    if (error) {
+      res
+        .status(401)
+        .json({ message: `Error occurred when querying database: ${error}` });
+    }
+    console.log("Assignments Retrieved!");
+    res.json(result);
+  });
+});
+
+app.get("api/projects", async (req, res) => {
+  const query = SQL`SELECT * from projects`;
+  databaseConnection.execute(query, (error, result) => {
+    if (error) {
+      res
+        .status(401)
+        .json({ message: `Error occurred when querying database: ${error}` });
+    }
+    console.log("Assignments Retrieved!");
+    res.json(result);
+  });
+});
