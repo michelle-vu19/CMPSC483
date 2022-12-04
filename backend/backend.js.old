@@ -1,10 +1,12 @@
-const { toHaveErrorMessage } = require('@testing-library/jest-dom/dist/matchers');
+const express = require('express')
 let csv = require('csv-parse');
 let createCsvWriter = require('csv-writer').createObjectCsvWriter;
 let fs = require('fs');
 let mySQL = require('mysql')
 let SQL = require('sql-template-strings');
 
+const app = express()
+app.use(express.json())
 
 // Edit with your MySQL Password:
 const mySQLPassword = 'password'
@@ -65,7 +67,7 @@ function databaseSetup(callback) {
     });
 }
 
-function connectToMySQL(callback) {
+export function connectToMySQL(callback) {
     mySQLConnection.connect(function (err) {
         if (err) throw err;
         console.log('Connected to MySQL!');
@@ -73,7 +75,7 @@ function connectToMySQL(callback) {
     });
 }
 
-function createDatabase(callback) {
+export function createDatabase(callback) {
     mySQLConnection.query(`CREATE DATABASE IF NOT EXISTS ${databaseName}`, function (err, result) {
         if (err) throw err;
         console.log('Database created!');
@@ -81,7 +83,7 @@ function createDatabase(callback) {
     });
 }
 
-function connectToDatabase(callback) {
+export function connectToDatabase(callback) {
     databaseConnection.connect(function (err) {
         if (err) throw err;
         console.log('Connected to the database!');
@@ -90,7 +92,7 @@ function connectToDatabase(callback) {
 }
 
 // Really does delete all data, be careful.
-function dropDatabase(callback) {
+export function dropDatabase(callback) {
     databaseConnection.query(`DROP DATABASE ${databaseName}`, function (err, result) {
         if (err) throw err;
         console.log('Database dropped!');
@@ -101,7 +103,7 @@ function dropDatabase(callback) {
 
 // ==================================== TABLE CREATION ====================================
 
-function createTables(callback) {
+export function createTables(callback) {
     createAssignmentsTable(function () {
         createPreferencesTable(function () {
             createProjectsTable(function () {
@@ -113,7 +115,7 @@ function createTables(callback) {
     });
 }
 
-function createAssignmentsTable(callback) {
+export function createAssignmentsTable(callback) {
     const query = (SQL `CREATE TABLE IF NOT EXISTS assignments (
                         project_id          VARCHAR(64),
                         student_id          VARCHAR(64))`);
@@ -124,7 +126,7 @@ function createAssignmentsTable(callback) {
     });
 }
 
-function createPreferencesTable(callback) {
+export function createPreferencesTable(callback) {
     const query = (SQL `CREATE TABLE IF NOT EXISTS preferences (
                         project_id          VARCHAR(64),
                         student_id          VARCHAR(64),
@@ -140,7 +142,7 @@ function createPreferencesTable(callback) {
     });
 }
 
-function createProjectsTable(callback) {
+export function createProjectsTable(callback) {
     const query = (SQL `CREATE TABLE IF NOT EXISTS projects (
                         id                  VARCHAR(64),
                         company             VARCHAR(255),
@@ -160,7 +162,7 @@ function createProjectsTable(callback) {
     });
 }
 
-function createStudentsTable(callback) {
+export function createStudentsTable(callback) {
     const query = (SQL `CREATE TABLE IF NOT EXISTS students (
                         id                  VARCHAR(64),
                         first_name           VARCHAR(255),
@@ -179,7 +181,7 @@ function createStudentsTable(callback) {
 
 // ==================================== CSV READING AND TABLE LOADING ====================================
 
-function readCSVs(callback) {
+export function readCSVs(callback) {
     readCSV(preferencesCSV, csv.parse({ delimiter: ',' }, function (err, data) { preferences = data.slice(1, data.length) }), function () {
         readCSV(projectsCSV, csv.parse({ delimiter: ',' }, function (err, data) { projects = data.slice(1, data.length) }), function () {
             readCSV(studentsCSV, csv.parse({ delimiter: ',' }, function (err, data) { students = data.slice(1, data.length) }), function () {
@@ -195,7 +197,7 @@ function readCSV(file, parser, callback) {
     fs.createReadStream(file).pipe(parser).on('error', function (err) { console.log(err) }).on('close', callback);
 }
 
-function loadTables(callback) {
+export function loadTables(callback) {
     loadAssignmentsTable(function () {
         loadPreferencesTable(function () {
             loadProjectsTable(function () {
@@ -207,7 +209,7 @@ function loadTables(callback) {
     });
 }
 
-async function loadAssignmentsTable(callback) {
+export async function loadAssignmentsTable(callback) {
     for (const student of students) {
         // studentid, projectid
         await addAssignment(student[8], student[1], function () { });
@@ -215,7 +217,7 @@ async function loadAssignmentsTable(callback) {
     callback();
 }
 
-async function loadPreferencesTable(callback) {
+export async function loadPreferencesTable(callback) {
     for (const preference of preferences) {
         // projectID, studentID, timeA, timeB, timeC, preference, comment.
         await addPreference(preference[1], preference[9], preference[2], preference[3], preference[4], preference[5], preference[6], function () { });
@@ -224,7 +226,7 @@ async function loadPreferencesTable(callback) {
     callback();
 }
 
-async function loadProjectsTable(callback) {
+export async function loadProjectsTable(callback) {
     for (const project of projects) {
         // Getting primary, secondary, and tertiary majors from 1-2-3 format 
         let primary = "";
@@ -243,7 +245,7 @@ async function loadProjectsTable(callback) {
     callback();
 }
 
-async function loadStudentsTable(callback) {
+export async function loadStudentsTable(callback) {
     for (const student of students) {
         // id, first, last, major, nda, ip, onCampus.
         await addStudent(student[8], student[10], student[9], student[0], student[6], student[7], (student[11] == "Yes") ? 1 : 0, function () { });
@@ -259,7 +261,7 @@ async function loadStudentsTable(callback) {
 // ==================================== CSV WRITING FROM TABLES ====================================
 
 // I'm assuming the other CSVs don't need to be written to, but they can be added later if they do.
-async function writeAssignmentsCSV(callback) {
+export async function writeAssignmentsCSV(callback) {
     const csvWriter = createCsvWriter({
         path: 'tempStudentAssignments.csv',
         header: [
@@ -308,21 +310,18 @@ async function writeAssignmentsCSV(callback) {
 // ==================================== QUERIES ====================================
 
 // Gets all assignments.
-function getAssignments() {
-    return new Promise(function (resolve, reject) {
-        const query = (SQL `SELECT * FROM assignments`);
-        databaseConnection.query(query, function (err, result) {
-            if (err) throw err;
-            else {
-                console.log('Assignments Retrieved!');
-                resolve(result);
-            }
-        });
-    });
-}
+app.get('/assignments', (req, res) => {
+    const query = (SQL `SELECT * FROM assignments`);
+    databaseConnection.query(query, function (err, result) {
+        if (err) throw err;
+        
+        console.log('Assignments Retrieved!');
+        resolve(result);
+    })
+});
 
 // Adding rows to tables.
-function addAssignment(studentID, projectID) {
+export function addAssignment(studentID, projectID) {
     return new Promise(function (resolve, reject) {
         const query = (SQL `INSERT INTO assignments
                             (student_id, project_id)
@@ -338,7 +337,7 @@ function addAssignment(studentID, projectID) {
 }
 
 //can we note when it finishes adding all preferences or something
-function addPreference(projectID, studentID, timeA, timeB, timeC, preference, comment) {
+export function addPreference(projectID, studentID, timeA, timeB, timeC, preference, comment) {
     return new Promise(function (resolve, reject) {
         const query = (SQL `INSERT INTO preferences
                             (project_id, student_id, time_a, time_b, time_c, preference, comment)
@@ -353,7 +352,7 @@ function addPreference(projectID, studentID, timeA, timeB, timeC, preference, co
     });
 }
 
-function addProject(id, company, title, primary, secondary, tertiary, confidentiality, ip, courseTime, courseName, prototype) {
+export function addProject(id, company, title, primary, secondary, tertiary, confidentiality, ip, courseTime, courseName, prototype) {
     return new Promise(function (resolve, reject) {
         const query = (SQL `INSERT INTO projects
                             (id, company, title, primary_major, secondary_major, tertiary_majors, confidentiality, ip, course_time, course_name, prototype)
@@ -368,7 +367,7 @@ function addProject(id, company, title, primary, secondary, tertiary, confidenti
     });
 }
 
-function addStudent(id, first, last, major, nda, ip, onCampus, callback) {
+export function addStudent(id, first, last, major, nda, ip, onCampus, callback) {
     return new Promise(function (resolve, reject) {
         const query = (SQL `INSERT INTO students
                             (id, first_name, last_name, major, nda, ip, on_campus)
@@ -434,7 +433,7 @@ function getTeamCount(projectID, callback) {
 }
 
 // Given a project and a major, return how many students of that major are on that project.
-function getMajorCount(projectID, major, callback) {
+export function getMajorCount(projectID, major, callback) {
     // Put the query in the ``.
     const query = (SQL `SELECT COUNT(s.id)
                         FROM assignments AS a
@@ -530,18 +529,18 @@ function updateAssignment(studentID, projectID, callback) {
     });
 }
 
-function getMajorDistribution(callback) {
-    // Put the query in the ``.
-    const query = (SQL `SELECT
-                        s.major, COUNT(*)
-                        FROM students AS s
-                        GROUP BY s.major;`);
-    databaseConnection.query(query, function (err, result) {
-        if (err) throw err;
-        // Do something with the result.
-        callback();
-    });
-}
+// export function getMajorDistribution(callback) {
+//     // Put the query in the ``.
+//     const query = (SQL `SELECT
+//                         s.major, COUNT(*)
+//                         FROM students AS s
+//                         GROUP BY s.major;`);
+//     databaseConnection.query(query, function (err, result) {
+//         if (err) throw err;
+//         // Do something with the result.
+//         callback();
+//     });
+// }
 
 function getCompletedPercent(callback){
     const query = (SQL ``);
