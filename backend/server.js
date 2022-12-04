@@ -99,7 +99,11 @@ app.get("/api/lowteams/:count", async (req, res) => {
 });
 
 app.get("/api/projects", async (req, res) => {
-  const query = SQL`SELECT * from projects`;
+  const query = SQL`SELECT *, COUNT(p.id)
+  FROM projects AS p
+  INNER JOIN assignments AS a
+  ON p.id = a.project_id
+  GROUP BY a.project_id`;
   databaseConnection.execute(query, (error, result) => {
     if (error) {
       res

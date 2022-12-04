@@ -88,6 +88,8 @@ const Dashboard = () => {
           };
         });
 
+        const projectList = await http.get("/api/projects");
+
         const studentList = await http.get("/api/student-assignments");
         console.log(studentList.data);
         setData((old) => {
