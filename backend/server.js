@@ -62,48 +62,12 @@ app.get("/api/assignments", async (req, res) => {
   });
 });
 
-app.get("/api/highteams/:count", async (req, res) => {
-  const query = SQL`SELECT projects.title, projects.company, projects.id
-    FROM projects
-    INNER JOIN assignments 
-        ON projects.id = assignments.project_id
-    GROUP BY assignments.project_id
-    HAVING COUNT(assignments.project_id) >= ${n}`;
-  databaseConnection.execute(query, (error, result) => {
-    if (error) {
-      res
-        .status(401)
-        .json({ message: `Error occurred when querying database: ${error}` });
-    }
-    console.log("highteams Retrieved!");
-    res.json(result);
-  });
-});
-
-app.get("/api/lowteams/:count", async (req, res) => {
-  const query = SQL`SELECT projects.title, projects.company, projects.id
-    FROM projects
-    INNER JOIN assignments 
-        ON projects.id = assignments.project_id
-    GROUP BY assignments.project_id
-    HAVING COUNT(assignments.project_id) <= ${n}`;
-  databaseConnection.execute(query, (error, result) => {
-    if (error) {
-      res
-        .status(401)
-        .json({ message: `Error occurred when querying database: ${error}` });
-    }
-    console.log("lowteams Retrieved!");
-    res.json(result);
-  });
-});
-
 app.get("/api/projects", async (req, res) => {
-  const query = SQL`SELECT *, COUNT(p.id)
-  FROM projects AS p
-  INNER JOIN assignments AS a
-  ON p.id = a.project_id
-  GROUP BY a.project_id`;
+  const query = SQL`SELECT Projects.id, Projects.company, Projects.title, Projects.primary_major, Projects.secondary_major, Projects.tertiary_majors, Projects.confidentiality, Projects.ip, Projects.course_time, Projects.course_name, Projects.prototype, COUNT(Assignments.student_id) as count
+  FROM Projects
+  LEFT JOIN Assignments ON Projects.id = Assignments.project_id
+  GROUP BY Projects.id
+  ORDER BY Projects.id`;
   databaseConnection.execute(query, (error, result) => {
     if (error) {
       res

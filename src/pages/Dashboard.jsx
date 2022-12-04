@@ -44,13 +44,13 @@ const Dashboard = () => {
     summary: [
       {
         title: "Completed Teams",
-        subtitle: "Completion Progress",
+        subtitle: "Progress",
         value: `Loading...`,
-        percent: 0,
+        percent: 1,
       },
       {
         title: "Assigned Students",
-        subtitle: "Students Progess",
+        subtitle: "Progess",
         value: "Loading...",
         percent: 0,
       },
@@ -89,6 +89,9 @@ const Dashboard = () => {
         });
 
         const projectList = await http.get("/api/projects");
+        const MAX = 5;
+        const MIN = 3;
+        console.log(projectList.data);
 
         const studentList = await http.get("/api/student-assignments");
         console.log(studentList.data);
@@ -97,12 +100,32 @@ const Dashboard = () => {
             ...old,
             summary: old.summary.map((info) => {
               if (info.title === "Assigned Students") {
-                info.value = `${studentList.data.length} Students`;
+                info.value = `${
+                  studentList.data.length -
+                  studentList.data.filter(
+                    (student) => student.project_id != null
+                  ).length
+                } out of ${studentList.data.length} Left`;
                 info.percent = `${Math.floor(
                   (studentList.data.filter(
                     (student) => student.project_id != null
                   ).length /
                     studentList.data.length) *
+                    100
+                )}`;
+              }
+
+              if (info.title === "Completed Teams") {
+                info.value = `${
+                  projectList.data.filter(
+                    (project) => project.count > MAX || project.count < MIN
+                  ).length
+                } out of ${projectList.data.length} Left`;
+                info.percent = `${Math.floor(
+                  (projectList.data.filter(
+                    (project) => project.count <= MAX && project.count >= MIN
+                  ).length /
+                    projectList.data.length) *
                     100
                 )}`;
               }
