@@ -1,14 +1,10 @@
-@use '../../scss/abstracts/' as *;
+@use "../../scss/abstracts/" as *;
 
 .dashboard-wrapper {
-    @include flex(stretch);
+  @include flex(stretch);
 
-
-    &__main {
-        flex-grow: 1;
-        padding-right: 0;
-
-    }
-
-
+  &__main {
+    flex-grow: 1;
+    padding-right: 0;
+  }
 }
