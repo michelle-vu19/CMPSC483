@@ -92,6 +92,23 @@ app.get("/api/students", async (req, res) => {
   });
 });
 
+app.put("/api/students/:id", async (req, res) => {
+  const { studentID, projectID } = req.body;
+
+  const query = SQL`UPDATE assigments 
+            SET project_id = ${projectID} 
+            WHERE student_id = ${studentID}`;
+  databaseConnection.execute(query, (error, result) => {
+    if (error) {
+      res
+        .status(401)
+        .json({ message: `Error occurred when querying database: ${error}` });
+    }
+    console.log("Students Updated!");
+    res.json(result);
+  });
+});
+
 app.get("/api/dashboard-major", async (req, res) => {
   const query = SQL`SELECT
                         s.major, COUNT(*) AS count
