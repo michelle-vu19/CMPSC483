@@ -91,7 +91,6 @@ const Dashboard = () => {
         const projectList = await http.get("/api/projects");
         const MAX = 5;
         const MIN = 3;
-        console.log(projectList.data);
 
         const studentList = await http.get("/api/student-assignments");
         console.log(studentList.data);
@@ -105,7 +104,7 @@ const Dashboard = () => {
                   studentList.data.filter(
                     (student) => student.project_id != null
                   ).length
-                } out of ${studentList.data.length} Left`;
+                } out of ${studentList.data.length} incomplete`;
                 info.percent = `${Math.floor(
                   (studentList.data.filter(
                     (student) => student.project_id != null
@@ -120,7 +119,7 @@ const Dashboard = () => {
                   projectList.data.filter(
                     (project) => project.count > MAX || project.count < MIN
                   ).length
-                } out of ${projectList.data.length} Left`;
+                } out of ${projectList.data.length} incomplete`;
                 info.percent = `${Math.floor(
                   (projectList.data.filter(
                     (project) => project.count <= MAX && project.count >= MIN
@@ -219,7 +218,7 @@ const RevenueByMonthsChart = ({ data }) => {
   };
   return (
     <>
-      <div className="title mb">Major Distribution</div>
+      <div className="title mb">Student Major Distribution</div>
       <div>
         <Bar options={chartOptions} data={chartData} height={`300px`} />
       </div>

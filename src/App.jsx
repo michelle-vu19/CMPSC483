@@ -5,6 +5,7 @@ import axios from "axios";
 import Blank from "./pages/Blank";
 import Dashboard from "./pages/Dashboard";
 import Group from "./pages/Group";
+import Students from "./pages/Students";
 
 import MainLayout from "./layout/MainLayout";
 
@@ -19,7 +20,7 @@ function App() {
           <Route index element={<Dashboard />} />
           <Route path="Home" element={<Blank />} />
           <Route path="Group" element={<Group />} />
-          <Route path="Students" element={<Blank />} />
+          <Route path="Students" element={<Students />} />
           <Route path="Stats" element={<Blank />} />
           <Route path="Export" element={<Blank />} />
         </Route>
